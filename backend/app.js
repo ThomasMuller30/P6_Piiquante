@@ -17,11 +17,19 @@ mongoose.connect(process.env.DB_STRING,
   .then(() => console.log('Connexion à MongoDB réussie !'))
   .catch(() => console.log('Connexion à MongoDB échouée !'));
 
+//Limitation des requêtes de connexions pour éviter le brute force
+const apiLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: 50, // Limite chaque IP à 50 requêtes par `window` (ici, par 15 minutes)
+	standardHeaders: true,
+	legacyHeaders: false,
+})
+
 const app = express();
 
 app.use(express.json());
-// app.use(helmet());
-// app.use(rateLimit());
+app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
+app.use('/api/auth/login', apiLimiter); //utilise la limite de requête brute force sur le chemin de login utilisateur
 
 app.use((req, res, next) => {//contourner les erreurs CORS
   res.setHeader('Access-Control-Allow-Origin', '*');//toute adresse peut se co
